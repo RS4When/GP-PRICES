@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang='en'>
+
+<head>
+    <meta charset='UTF-8'>
+    <script src='https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js'></script>
+    <title>OSRS GP prices</title>
+</head>
+
+<body>
+    <h1>Wait</h1>
+    <script>
+        const middleman = 'https://api.allorigins.win/get?url=';
+        var prices = [
+            { name: 'Alch', price: null, web: 'https://alch.com/buy-runescape-gold/' },
+            { name: 'Yeti', price: null, web: 'https://yetigp.com/buy/oldschool' },
+            { name: 'Realist', price: null, web: 'https://realistgold.com/cart/RuneScape-OSRS-Gold/' },
+            { name: 'Rpgstock', price: null, web: 'https://rpgstock.com/' },
+            { name: 'LuckyCharm', price: null, web: 'https://www.luckycharmgold.com/buy-osrs-gold' }
+        ]
+
+        var webCalls = [
+            $.getJSON(middleman + encodeURIComponent('https://alch.com/buy-runescape-gold/')),
+            $.getJSON('https://www.yetigp.com/api/stock'),
+            $.getJSON(middleman + encodeURIComponent('https://realistgold.com/cart/RuneScape-OSRS-Gold/')),
+            $.getJSON(middleman + encodeURIComponent('https://rpgstock.com/')),
+            $.getJSON(middleman + encodeURIComponent('https://www.luckycharmgold.com/buy-osrs-gold')),
+        ];
+
+        Promise.allSettled(webCalls).then((results) => {
+            prices[0].price = parseFloat(
+                results[0].value.contents.match(/(?<=productPrice = Number\(')([+-]?([0-9]*[.])?[0-9]+)/g)
+            );
+
+            prices[1].price = parseFloat(results[1].value.osrs.selling);
+
+            prices[2].price = parseFloat(
+                results[2].value.contents.match(/([+-]?([0-9]*[.])?[0-9]+)(?= per unit)/g)
+            );
+
+            prices[3].price = parseFloat(
+                results[3].value.contents.match(/(?<=->)([+-]?([0-9]*[.])?[0-9]+)/)
+            );
+
+            prices[4].price = parseFloat(
+                results[4].value.contents.match(/([+-]?([0-9]*[.])?[0-9]+)(?=\/M)/g)
+            );
+
+            var sorted = prices.slice(0);
+            sorted.sort(function (a, b) {
+                return a.price - b.price;
+            });
+           
+            $('body').append('<pre>' + JSON.stringify(sorted, null, '\t') + '</pre>');
+            $('h1').remove();
+        });
+
+    </script>
+</body>
+
+</html>
